@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "Interaction": {
+      "title": "Interaction",
+      "description": "User journal reflection, conversational turns, and Gemini AI analysis",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique interaction identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owning user"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title or headline of the journal reflection",
+          "maxLength": 200
+        },
+        "content": {
+          "type": "string",
+          "description": "Original journal prompt or reflection text",
+          "maxLength": 10000
+        },
+        "mode": {
+          "type": "string",
+          "description": "Reflection mode chosen by user",
+          "enum": ["reflection", "brainstorm", "summary", "converse"]
+        },
+        "aiResponse": {
+          "type": "string",
+          "description": "Synthesized AI response from Gemini 3.6 Flash",
+          "maxLength": 25000
+        },
+        "turns": {
+          "type": "array",
+          "description": "Multi-turn dialogue history within this journal thread"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp or server timestamp string of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp or server timestamp string of update"
+        }
+      },
+      "required": ["userId", "content", "mode", "aiResponse", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/interactions/{interactionId}": {
+      "schema": "Interaction",
+      "description": "User-isolated collection of journal entries, conversational reflections, and Gemini summaries"
+    }
+  }
+}

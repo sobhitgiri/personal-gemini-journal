@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Isolated user-specific interactions & reflections collection
+    match /users/{userId}/interactions/{interactionId} {
+      // Helper to validate incoming payload
+      function isValidInteraction(data) {
+        return data.userId is string &&
+               data.userId == userId &&
+               data.content is string &&
+               data.content.size() <= 10000 &&
+               data.aiResponse is string &&
+               data.aiResponse.size() <= 25000 &&
+               data.mode in ['reflection', 'brainstorm', 'summary', 'converse'] &&
+               data.createdAt is string;
+      }
+
+      // Read operations: Strictly restricted to authenticated owner
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Creation: Authenticated owner creating document with valid structure
+      allow create: if request.auth != null &&
+                       request.auth.uid == userId &&
+                       isValidInteraction(request.resource.data);
+
+      // Updates: Authenticated owner maintaining identity immutability
+      allow update: if request.auth != null &&
+                       request.auth.uid == userId &&
+                       isValidInteraction(request.resource.data) &&
+                       request.resource.data.userId == resource.data.userId &&
+                       request.resource.data.createdAt == resource.data.createdAt;
+
+      // Deletion: Authenticated owner
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Health check/connection test path as recommended by Firebase Skill
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
